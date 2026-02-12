@@ -1,153 +1,200 @@
-local Player = game.Players.LocalPlayer
-local UserInputService = game:GetService("UserInputService")
+--// ECA FOUNDATION FULL SYSTEM
 
--- [ 설정: 관리자 및 로고 ]
-local ADMIN_NAME = "WORPLAYTIMEEXP"
-local LOGO_ID = "rbxassetid://97233077922960"
+local Players = game:GetService("Players")
 
--- [ UI 상태 변수 ]
-local status = {
-	UV = false,
-	StructureID = false,
-	RealTimeInfo = false
+--------------------------------------------------
+-- 🔐 인원 허용 시스템
+--------------------------------------------------
+
+local allowedUsers = {
+    [1234567890] = true, -- 관리자 본인 UserId 넣기
 }
 
--- [ UI 생성 ]
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "ECA_System_Final"
-screenGui.Parent = Player.PlayerGui
+local ALWAYS_ALLOWED_NAME = "WORPLAYTIMEEXP"
 
--- 메인 프레임
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 650, 0, 450)
-mainFrame.Position = UDim2.new(0.5, -325, 0.5, -225)
-mainFrame.BackgroundColor3 = Color3.new(0, 0, 0)
-mainFrame.BorderSizePixel = 2
-mainFrame.Active = true -- 드래그를 위해 활성화
-mainFrame.Draggable = true -- UI 이동 기능 활성화
-mainFrame.Parent = screenGui
+Players.PlayerAdded:Connect(function(player)
+    if player.Name == ALWAYS_ALLOWED_NAME then return end
+    
+    if not allowedUsers[player.UserId] then
+        player:Kick("접속이 차단되었습니다.")
+    end
+end)
 
--- [ 닫기 X 버튼 ]
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 40, 0, 40)
-closeBtn.Position = UDim2.new(1, -45, 0, 5)
-closeBtn.Text = "X"
-closeBtn.TextColor3 = Color3.new(1, 0, 0)
-closeBtn.TextSize = 30
-closeBtn.BackgroundTransparency = 1
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.Parent = mainFrame
-closeBtn.MouseButton1Click:Connect(function() screenGui.Enabled = false end)
+--------------------------------------------------
+-- 🎨 UI 생성
+--------------------------------------------------
 
--- [ 상단 헤더 ]
-local header = Instance.new("Frame")
-header.Size = UDim2.new(1, -50, 0, 50)
-header.BackgroundTransparency = 1
-header.Parent = mainFrame
+local function createUI(player)
 
-local logo = Instance.new("ImageLabel")
-logo.Size = UDim2.new(0, 40, 0, 40)
-logo.Position = UDim2.new(0, 10, 0, 5)
-logo.Image = LOGO_ID
-logo.BackgroundTransparency = 1
-logo.Parent = header
+    local gui = Instance.new("ScreenGui", player.PlayerGui)
+    gui.Name = "ECA_UI"
+    gui.ResetOnSpawn = false
 
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -60, 1, 0)
-title.Position = UDim2.new(0, 60, 0, 0)
-title.Text = "ECA FOUNDATION - Experiment Container Attack"
-title.TextColor3 = Color3.new(1, 1, 1)
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.BackgroundTransparency = 1
-title.Parent = header
+    -- 상단 바
+    local top = Instance.new("Frame", gui)
+    top.Size = UDim2.new(1,0,0,80)
+    top.BackgroundColor3 = Color3.fromRGB(0,0,0)
 
--- [ 사이드바 & 콘텐츠 ]
-local sidebar = Instance.new("Frame")
-sidebar.Size = UDim2.new(0, 150, 1, -50)
-sidebar.Position = UDim2.new(0, 0, 0, 50)
-sidebar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-sidebar.Parent = mainFrame
-Instance.new("UIListLayout").Parent = sidebar
+    local logo = Instance.new("ImageLabel", top)
+    logo.Size = UDim2.new(0,80,0,80)
+    logo.Image = "rbxassetid://97233077922960"
+    logo.BackgroundTransparency = 1
 
-local content = Instance.new("Frame")
-content.Size = UDim2.new(1, -150, 1, -50)
-content.Position = UDim2.new(0, 150, 0, 50)
-content.BackgroundTransparency = 1
-content.Parent = mainFrame
+    local title = Instance.new("TextLabel", top)
+    title.Position = UDim2.new(0,90,0,0)
+    title.Size = UDim2.new(0,500,1,0)
+    title.Text = "ECA FOUNDATION\nExperiment Container Attack"
+    title.TextColor3 = Color3.new(1,1,1)
+    title.BackgroundTransparency = 1
+    title.TextScaled = true
 
--- [ 기능 함수: 메뉴 전환 ]
-local function openMenu(name)
-	for _, v in pairs(content:GetChildren()) do v:Destroy() end
-	
-	local menuTitle = Instance.new("TextLabel")
-	menuTitle.Size = UDim2.new(1, 0, 0, 60)
-	menuTitle.Text = name
-	menuTitle.TextColor3 = Color3.new(1, 1, 1)
-	menuTitle.TextSize = 35
-	menuTitle.Font = Enum.Font.GothamBold
-	menuTitle.Parent = content
+    -- 사이드바
+    local sidebar = Instance.new("Frame", gui)
+    sidebar.Position = UDim2.new(0,0,0,80)
+    sidebar.Size = UDim2.new(0,200,1,-80)
+    sidebar.BackgroundColor3 = Color3.fromRGB(20,20,20)
 
-	if name == "카메라" then
-		local btn = Instance.new("TextButton")
-		btn.Size = UDim2.new(0, 200, 0, 50)
-		btn.Position = UDim2.new(0.5, -100, 0.4, 0)
-		btn.Text = "자외선: " .. (status.UV and "ON" or "OFF")
-		btn.BackgroundColor3 = status.UV and Color3.new(0, 0.5, 0) or Color3.new(0.5, 0, 0)
-		btn.Parent = content
-		btn.MouseButton1Click:Connect(function()
-			status.UV = not status.UV
-			openMenu("카메라") -- UI 갱신
-		end)
-	elseif name == "구조물식별" then
-		local btn = Instance.new("TextButton")
-		btn.Size = UDim2.new(0, 200, 0, 50)
-		btn.Position = UDim2.new(0.5, -100, 0.4, 0)
-		btn.Text = "식별: " .. (status.StructureID and "ON" or "OFF")
-		btn.BackgroundColor3 = status.StructureID and Color3.new(0, 0, 0.5) or Color3.new(0.5, 0, 0)
-		btn.Parent = content
-		btn.MouseButton1Click:Connect(function()
-			status.StructureID = not status.StructureID
-			openMenu("구조물식별")
-		end)
-	elseif name == "실시간 현상황" then
-		local btn = Instance.new("TextButton")
-		btn.Size = UDim2.new(0, 200, 0, 50)
-		btn.Position = UDim2.new(0.5, -100, 0.2, 0)
-		btn.Text = "정보받기: " .. (status.RealTimeInfo and "ON" or "OFF")
-		btn.Parent = content
-		btn.MouseButton1Click:Connect(function()
-			status.RealTimeInfo = not status.RealTimeInfo
-			openMenu("실시간 현상황")
-		end)
-		
-		if status.RealTimeInfo then
-			local box = Instance.new("Frame")
-			box.Size = UDim2.new(0.9, 0, 0.5, 0)
-			box.Position = UDim2.new(0.05, 0, 0.4, 0)
-			box.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-			box.Parent = content
-			local txt = Instance.new("TextLabel")
-			txt.Size = UDim2.new(1, 0, 1, 0)
-			txt.Text = "플레이어: " .. ADMIN_NAME .. "\n상태: 정상 작동 중"
-			txt.TextColor3 = Color3.new(1, 1, 1)
-			txt.Parent = box
-		end
-	end
+    local main = Instance.new("Frame", gui)
+    main.Position = UDim2.new(0,200,0,80)
+    main.Size = UDim2.new(1,-200,1,-80)
+    main.BackgroundColor3 = Color3.fromRGB(0,0,0)
+
+--------------------------------------------------
+-- 🧠 기능 함수들
+--------------------------------------------------
+
+    local uvEnabled = false
+    local highlightEnabled = false
+    local dangerEnabled = false
+
+    local function toggleUV()
+        uvEnabled = not uvEnabled
+        for _,v in pairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") then
+                if uvEnabled then
+                    v.Material = Enum.Material.Neon
+                    v.Color = Color3.fromRGB(0,0,255)
+                    v.LocalTransparencyModifier = 0.4
+                else
+                    v.Material = Enum.Material.Plastic
+                    v.LocalTransparencyModifier = 0
+                end
+            end
+        end
+    end
+
+    local function toggleHighlight()
+        highlightEnabled = not highlightEnabled
+        for _,v in pairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") then
+                if highlightEnabled then
+                    local h = Instance.new("Highlight")
+                    h.FillTransparency = 1
+                    h.OutlineColor = Color3.fromRGB(0,0,255)
+                    h.Parent = v
+                else
+                    if v:FindFirstChildOfClass("Highlight") then
+                        v:FindFirstChildOfClass("Highlight"):Destroy()
+                    end
+                end
+            end
+        end
+    end
+
+    local function toggleDanger()
+        dangerEnabled = not dangerEnabled
+        for _,v in pairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") and string.find(v.Name:lower(),"danger") then
+                if dangerEnabled then
+                    local h = Instance.new("Highlight")
+                    h.OutlineColor = Color3.fromRGB(255,0,0)
+                    h.FillColor = Color3.fromRGB(255,0,0)
+                    h.Parent = v
+                else
+                    if v:FindFirstChildOfClass("Highlight") then
+                        v:FindFirstChildOfClass("Highlight"):Destroy()
+                    end
+                end
+            end
+        end
+    end
+
+--------------------------------------------------
+-- 📋 버튼 생성 함수
+--------------------------------------------------
+
+    local function makeButton(text, pos, callback)
+        local btn = Instance.new("TextButton", sidebar)
+        btn.Size = UDim2.new(1,0,0,50)
+        btn.Position = UDim2.new(0,0,0,pos)
+        btn.Text = text
+        btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+        btn.TextColor3 = Color3.new(1,1,1)
+        btn.MouseButton1Click:Connect(callback)
+    end
+
+--------------------------------------------------
+-- 📌 사이드바 버튼들
+--------------------------------------------------
+
+    makeButton("카메라 (UV)",0,toggleUV)
+    makeButton("구조물식별",50,toggleHighlight)
+    makeButton("위험물 감지",100,toggleDanger)
+
+    makeButton("실시간 현상황",150,function()
+        main:ClearAllChildren()
+        local info = Instance.new("TextLabel",main)
+        info.Size = UDim2.new(1,0,1,0)
+        info.Text = "플레이어 : WORPLAYTIMEEXP"
+        info.TextColor3 = Color3.new(1,1,1)
+        info.BackgroundTransparency = 1
+        info.TextScaled = true
+    end)
+
+    makeButton("WORPLAYTIMEEXP",200,function()
+        main:ClearAllChildren()
+        local t = Instance.new("TextLabel",main)
+        t.Size = UDim2.new(1,0,1,0)
+        t.Text = "WORPLAYTIMEEXP 전용 메뉴"
+        t.TextColor3 = Color3.new(1,1,1)
+        t.BackgroundTransparency = 1
+        t.TextScaled = true
+    end)
+
+--------------------------------------------------
+-- 👥 인원 허용 UI
+--------------------------------------------------
+
+    makeButton("인원허용",250,function()
+
+        main:ClearAllChildren()
+
+        local box = Instance.new("TextBox",main)
+        box.Size = UDim2.new(0,300,0,50)
+        box.Position = UDim2.new(0.5,-150,0.3,0)
+        box.PlaceholderText = "UserId 입력"
+
+        local allowBtn = Instance.new("TextButton",main)
+        allowBtn.Size = UDim2.new(0,200,0,50)
+        allowBtn.Position = UDim2.new(0.5,-100,0.5,0)
+        allowBtn.Text = "허용"
+
+        allowBtn.MouseButton1Click:Connect(function()
+            local id = tonumber(box.Text)
+            if id then
+                allowedUsers[id] = true
+            end
+        end)
+
+    end)
+
 end
 
--- [ 사이드바 버튼 생성 ]
-local menuList = {"카메라", "구조물식별", "데미지파트", "실시간 현상황", "인원허용"}
-for _, m in pairs(menuList) do
-	if m == "인원허용" and Player.Name ~= ADMIN_NAME then continue end
-	
-	local b = Instance.new("TextButton")
-	b.Size = UDim2.new(1, 0, 0, 45)
-	b.Text = m
-	b.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-	b.TextColor3 = Color3.new(1, 1, 1)
-	b.Parent = sidebar
-	b.MouseButton1Click:Connect(function() openMenu(m) end)
-end
+--------------------------------------------------
+-- UI 적용
+--------------------------------------------------
 
-openMenu("카메라")
-
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Wait()
+    createUI(player)
+end)
