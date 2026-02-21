@@ -2,7 +2,7 @@ local MarketService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer or Players.PlayerAdded:Wait()
 
-local decalId = 105271121261622 -- 요청하신 ID
+local decalId = 129650208804431 -- 요청하신 ID
 
 -- 실제 이미지 ID를 가져오는 함수
 local success, info = pcall(function()
